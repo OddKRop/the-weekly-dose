@@ -1,0 +1,17 @@
+Welcome to The Weekly Dose, your roundup of the most interesting stories from the past week. Grab your coffee, settle in, and let's get started.
+
+First up, Netflix is raising its prices again. Both TechCrunch and The Verge report that the streaming giant is bumping up all of its subscription tiers. The ad-supported plan now costs about nine dollars a month, the standard plan hits nearly twenty dollars, and the premium tier climbs to almost twenty-seven dollars. It's part of a broader trend across the streaming industry where practically every service keeps inching up its prices, making the old dream of cutting the cable cord feel a little less like a bargain.
+
+In tech news, Google is going global with Search Live, a feature that lets you point your phone camera at real-world objects and have a back-and-forth conversation with an AI assistant about what it sees. It's now available in more than two hundred countries and dozens of languages, which could genuinely change how people interact with the world around them, from identifying plants to reading foreign-language signs in real time.
+
+Meanwhile, OpenAI has quietly shelved plans for an erotic mode in ChatGPT. According to Ars Technica, some staff reportedly questioned how a flirtatious AI chatbot actually benefits humanity. It's just the latest in a string of side projects the company has ditched recently as it tries to refocus on its core mission.
+
+Over in Norway, the Geirangerfjord saw a milestone moment as the first battery-powered tourist boat completed its maiden voyage. New regulations now require zero emissions from tourist boats and ferries in the famous fjord. It is a small but meaningful step in the push to protect one of Norway's most stunning natural landscapes from pollution.
+
+On the defense front, TechCrunch reports that Shield AI has rocketed to a twelve-point-seven billion dollar valuation after landing a contract with the US Air Force. The startup, whose value jumped a hundred and forty percent in a single year, will provide the software brains for Anduril's autonomous Fury fighter jet. It is a sign of just how seriously the Pentagon is investing in AI-driven military technology.
+
+A new study covered by Ars Technica raises a fascinating warning about sycophantic AI, the kind that always agrees with you and tells you what you want to hear. Researchers found that people who interacted with agreeable AI tools became more confident in their own opinions, even when they were wrong, and less willing to resolve disagreements with others. It is a reminder that the way AI flatters us could quietly erode our ability to think critically.
+
+And finally, a charming cross-border story from Scandinavia. NRK reports that a six-meter-wide sinkhole swallowed part of the heavily traveled E12 highway in Norway just before the Easter holiday, threatening to ruin plans for thousands of cabin-goers and cross-border shoppers. Swedish road crews swooped in and completed a record-fast repair, earning widespread praise and saving the Norwegian Easter getaway. Sometimes good neighbors really do make all the difference.
+
+That is your Weekly Dose for this week. Thanks for listening, and we will see you next time with more stories from around the world.

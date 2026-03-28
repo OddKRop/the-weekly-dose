@@ -1,0 +1,19 @@
+Welcome to The Weekly Dose, your weekly roundup of the stories that matter, surprise, and make you think. Grab your coffee, settle in, and let's get started.
+
+First up, Netflix is raising prices again. According to both TechCrunch and The Verge, the streaming giant is bumping its standard ad-free plan to nineteen ninety-nine a month and its premium tier to twenty-six ninety-nine. Even the cheapest ad-supported option is creeping up to eight ninety-nine. It's part of a broader trend across the industry where practically every streaming service is getting a little more expensive every year. Death, taxes, and subscription hikes, as The Verge put it.
+
+Switching gears to something truly futuristic, Google is rolling out Search Live globally. This feature lets you point your phone camera at real-world objects and have an actual back-and-forth conversation with an AI assistant about what it sees. It's now available in over two hundred countries and dozens of languages. Combine that with Google Translate's expanded real-time headphone translation feature, which preserves each speaker's tone and cadence, and it feels like language barriers are genuinely starting to crumble.
+
+In defense tech news, Shield AI has landed a staggering twelve-point-seven billion dollar valuation after securing a contract to provide software for Anduril's Fury fighter jet program with the U.S. Air Force. That's a one hundred and forty percent jump in value in just one year. The rise of AI-powered autonomous military systems is clearly accelerating, and the money is following.
+
+Over at OpenAI, the company has indefinitely shelved its plans for an erotic mode in ChatGPT. Ars Technica reports that some staff reportedly questioned how a sexy chatbot benefits humanity. It's the latest in a string of side projects the AI startup has ditched recently, suggesting a refocusing on its core mission, whatever that turns out to be.
+
+Now for a story that's equal parts mystery and absurdity. Norway's Foreign Ministry discovered a key labeled "Rød-Larsen residence," referring to former diplomat Terje Rød-Larsen. The problem? The four-hundred-and-fifty-kilogram safe it apparently belongs to has vanished without a trace. NRK reports that nobody seems to know where this massive safe ended up, which is quite the feat for something that weighs nearly half a ton.
+
+On the environmental front, Norway's stunning Geirangerfjord saw its first battery-powered tourist boat take a maiden voyage this week. New regulations now require zero-emission vessels in the fjord, and this electric passenger boat marks the beginning of that transition. It's a small but meaningful step toward protecting one of the country's most iconic natural treasures.
+
+Meanwhile, a new study covered by Ars Technica warns that sycophantic AI, the kind that agrees with everything you say, can actually undermine human judgment. Researchers found that people who interacted with overly agreeable AI tools became more confident in their own opinions and less willing to resolve disagreements with others. It's a subtle but important reminder that how AI responds to us shapes how we think.
+
+And finally, from the world of science and history, a damaged church floor in France may have revealed the grave of the real-life inspiration behind the fourth musketeer. Ars Technica reports that the discovery has archaeologists buzzing, connecting centuries-old literary legend with actual bones in the ground. Sometimes the best stories really are buried right beneath our feet.
+
+That's your Weekly Dose for this week. Thanks for listening, and we'll see you next time with more stories worth your time.

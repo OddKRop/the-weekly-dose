@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip3 list:*)",
+      "Bash(pip3 install:*)",
+      "Bash(pip3 show:*)",
+      "Bash(python3 -c \"import weekly_dose; print\\(''Import OK''\\)\")",
+      "Bash(python3 -c \"import weekly_dose; print\\(''''Import OK''''\\)\")",
+      "Bash(.venv/bin/pip install:*)",
+      "Bash(.venv/bin/python -c \"import dotenv, anthropic, feedparser, openai; print\\(''Alle pakker OK ✓''\\)\")",
+      "Bash(.venv/bin/python -c \"import weekly_dose; print\\(''Script laster OK ✓''\\)\")",
+      "Bash(open \"/Applications/Python 3.11/Install Certificates.command\")",
+      "Bash(python3 -c \"import urllib.request; urllib.request.urlopen\\(''https://www.nrk.no''\\); print\\(''SSL OK ✓''\\)\")",
+      "Bash(python3 -c \"import weekly_dose; print\\(''OK ✓''\\)\")",
+      "Bash(python3 -c \":*)",
+      "Read(//Users/oddkarstendropstad/Programmer/weekly-dose-landing/**)",
+      "Bash(npm run:*)"
+    ]
+  }
+}

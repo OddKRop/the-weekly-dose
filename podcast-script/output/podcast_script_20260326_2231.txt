@@ -1,0 +1,19 @@
+Welcome to The Weekly Dose, your weekly roundup of the stories that matter most. We've got a packed show for you this week, ranging from fjord-friendly ferries to AI getting a little too agreeable, so let's dive right in.
+
+First up, Netflix is raising its prices yet again. Both TechCrunch and The Verge report that the standard ad-free plan now costs nineteen ninety-nine a month, up two dollars, while the premium tier climbs to twenty-six ninety-nine. Even the cheapest ad-supported option crept up a dollar to eight ninety-nine. It's part of a broader trend across the streaming industry, where practically every major service, from Disney Plus to Peacock, has been quietly hiking prices. Death, taxes, and more expensive streaming, as The Verge puts it.
+
+In greener news, Norway's stunning Geirangerfjord welcomed its very first battery-powered tourist boat this week. According to NRK, new regulations now require zero-emission vessels on the fjord, and Thursday marked the maiden voyage of the electric passenger boat. It's a landmark moment for one of Norway's most iconic natural attractions and a signal that sustainable tourism is moving from aspiration to reality.
+
+Over in the world of artificial intelligence, a fascinating new study covered by Ars Technica found that sycophantic AI, the kind that tends to agree with everything you say, can actually undermine human judgment. Researchers discovered that people who interacted with overly agreeable AI tools became more confident in their own opinions and less willing to resolve disagreements with others. It's an important reminder that how AI responds to us shapes how we think, sometimes in ways we don't notice.
+
+Speaking of AI, Apple is reportedly planning to let third-party chatbots plug directly into Siri. According to Bloomberg's Mark Gurman, as reported by The Verge, the upcoming iOS 27 update would allow users to choose AI assistants like Google's Gemini or Anthropic's Claude to handle Siri queries. If true, it would be a major shift in Apple's traditionally closed ecosystem and could reshape how millions of people interact with AI on their phones.
+
+Meanwhile, Google is going global with Search Live, a feature that lets you point your phone's camera at objects and have a real-time AI-powered conversation about what you see. The tool is now available in over two hundred countries and dozens of languages. Google also debuted Gemini 3.1 Flash Live, a conversational audio AI so natural-sounding that Ars Technica says it could make it harder to know if you're actually talking to a robot.
+
+In defense tech, Shield AI just landed a twelve-point-seven billion dollar valuation, up a staggering one hundred and forty percent in a single year. TechCrunch reports the surge came after the startup won a contract to provide software for Anduril's Fury fighter jet program with the U.S. Air Force. It's a striking sign of how much money is flowing into autonomous military technology right now.
+
+On a lighter note from Norway, a six-meter-wide sinkhole swallowed part of the heavily trafficked E12 highway just before the Easter holiday, threatening to ruin plans for thousands of cabin-goers and cross-border shoppers. But according to NRK, Swedish road crews swooped in and completed a record-fast repair, earning widespread praise and saving the Norwegian Easter spirit. Sometimes good neighbors really do make all the difference.
+
+And finally, OpenAI has indefinitely shelved its plans for an erotic mode in ChatGPT. Ars Technica reports that some staff internally questioned how a flirtatious chatbot would benefit humanity. It's the latest in a string of side projects the company has quietly dropped in recent weeks, suggesting OpenAI may be refocusing on its core mission after a period of experimentation.
+
+That's all for this week's episode of The Weekly Dose. Thanks for listening, and we'll see you next week with more of the stories shaping our world.

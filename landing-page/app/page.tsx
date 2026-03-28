@@ -23,11 +23,35 @@ const features = [
 export default function Home() {
   const [email, setEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!email) return;
-    setSubmitted(true);
+    setLoading(true);
+    setError("");
+
+    try {
+      const res = await fetch(
+        "https://embeds.beehiiv.com/api/v1/publications/019e1ef0-6a34-496f-9fd2-a1516478e545/subscriptions",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        }
+      );
+
+      if (res.ok) {
+        setSubmitted(true);
+      } else {
+        setError("Something went wrong. Please try again.");
+      }
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -86,12 +110,14 @@ export default function Home() {
               />
               <button
                 type="submit"
-                className="rounded-xl bg-white text-black px-6 py-3 text-sm font-semibold hover:bg-zinc-200 transition-colors whitespace-nowrap"
+                disabled={loading}
+                className="rounded-xl bg-white text-black px-6 py-3 text-sm font-semibold hover:bg-zinc-200 transition-colors whitespace-nowrap disabled:opacity-50"
               >
-                Subscribe free
+                {loading ? "Subscribing..." : "Subscribe free"}
               </button>
             </form>
           )}
+          {error && <p className="mt-3 text-xs text-red-500">{error}</p>}
           <p className="mt-3 text-xs text-zinc-700">No spam. Unsubscribe anytime.</p>
         </div>
       </section>

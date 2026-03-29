@@ -8,6 +8,8 @@ import anthropic
 import json
 import re
 import textwrap
+import os
+import requests
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from dateutil import parser as dateparser
@@ -230,6 +232,44 @@ def text_to_speech(script: str, output_path: Path) -> Path:
     return output_path
 
 
+# ─── Step 4: Upload to Buzzsprout ─────────────────────────────────────────────
+
+def upload_to_buzzsprout(audio_path: Path, title: str, description: str) -> str:
+    """Upload episode to Buzzsprout and return the episode URL."""
+    print("\n=== Step 4: Uploading to Buzzsprout ===")
+
+    api_token = os.environ.get("BUZZSPROUT_API_TOKEN")
+    podcast_id = os.environ.get("BUZZSPROUT_PODCAST_ID")
+
+    if not api_token or not podcast_id:
+        print("  Buzzsprout credentials not set — skipping upload.")
+        return ""
+
+    url = f"https://www.buzzsprout.com/api/{podcast_id}/episodes.json"
+    headers = {"Authorization": f"Token token={api_token}"}
+
+    with open(audio_path, "rb") as f:
+        response = requests.post(
+            url,
+            headers=headers,
+            data={
+                "title": title,
+                "description": description,
+                "private": 0,
+            },
+            files={"audio_file": (audio_path.name, f, "audio/mpeg")},
+        )
+
+    if response.ok:
+        episode = response.json()
+        episode_url = episode.get("audio_url", "")
+        print(f"  Episode uploaded! URL: {episode_url}")
+        return episode_url
+    else:
+        print(f"  Buzzsprout upload failed: {response.status_code} {response.text}")
+        return ""
+
+
 # ─── Main ──────────────────────────────────────────────────────────────────────
 
 def main():
@@ -261,7 +301,14 @@ def main():
     audio_path = OUTPUT_DIR / f"the_weekly_dose_{timestamp}.mp3"
     text_to_speech(script, audio_path)
 
+    # Step 4: Upload to Buzzsprout
+    episode_title = f"The Weekly Dose – {datetime.now().strftime('%d. %B %Y')}"
+    episode_description = "Your weekly briefing on Norway, the world, and tech — in 20 minutes or less."
+    episode_url = upload_to_buzzsprout(audio_path, episode_title, episode_description)
+
     print(f"\n✓ Done! Podcast ready: {audio_path}")
+    if episode_url:
+        print(f"✓ Live on Buzzsprout: {episode_url}")
 
 
 if __name__ == "__main__":

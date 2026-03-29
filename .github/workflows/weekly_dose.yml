@@ -1,0 +1,32 @@
+name: The Weekly Dose — Generate & Upload Episode
+
+on:
+  schedule:
+    - cron: "0 18 * * 4"  # Torsdag 18:00 UTC = 20:00 Oslo-tid
+  workflow_dispatch:       # Kan også kjøres manuelt fra GitHub
+
+jobs:
+  generate-episode:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        working-directory: podcast-script
+        run: pip install -r requirements.txt
+
+      - name: Generate and upload episode
+        working-directory: podcast-script
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          BUZZSPROUT_API_TOKEN: ${{ secrets.BUZZSPROUT_API_TOKEN }}
+          BUZZSPROUT_PODCAST_ID: ${{ secrets.BUZZSPROUT_PODCAST_ID }}
+        run: python weekly_dose.py

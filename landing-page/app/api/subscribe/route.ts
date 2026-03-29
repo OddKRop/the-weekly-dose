@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const PUBLICATION_ID = "019e1ef0-6a34-496f-9fd2-a1516478e545";
+const PUBLICATION_ID = "pub_019e1ef0-6a34-496f-9fd2-a1516478e545";
 
 export async function POST(req: NextRequest) {
   const { email } = await req.json();

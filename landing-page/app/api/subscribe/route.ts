@@ -7,18 +7,27 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Email is required" }, { status: 400 });
   }
 
-  const res = await fetch("https://app.beehiiv.com/subscribe", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      email,
-      publication_id: "019e1ef0-6a34-496f-9fd2-a1516478e545",
-    }).toString(),
-  });
+  try {
+    const res = await fetch(
+      "https://embeds.beehiiv.com/api/v1/publications/019e1ef0-6a34-496f-9fd2-a1516478e545/subscriptions",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      }
+    );
 
-  if (res.ok) {
-    return NextResponse.json({ success: true });
+    const text = await res.text();
+    console.log("Beehiiv response status:", res.status);
+    console.log("Beehiiv response body:", text);
+
+    if (res.ok) {
+      return NextResponse.json({ success: true });
+    }
+
+    return NextResponse.json({ error: "Beehiiv error", status: res.status, body: text }, { status: 500 });
+  } catch (err) {
+    console.error("Subscribe error:", err);
+    return NextResponse.json({ error: String(err) }, { status: 500 });
   }
-
-  return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
 }

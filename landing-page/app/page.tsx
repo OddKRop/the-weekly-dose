@@ -22,11 +22,33 @@ const features = [
 
 export default function Home() {
   const [email, setEmail] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!email) return;
-    window.location.href = `https://weeklydose.beehiiv.com/subscribe?email=${encodeURIComponent(email)}`;
+    setLoading(true);
+    setError("");
+
+    try {
+      const res = await fetch("/api/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      if (res.ok) {
+        setSubmitted(true);
+      } else {
+        setError("Something went wrong. Please try again.");
+      }
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -69,7 +91,12 @@ export default function Home() {
 
         {/* Email signup */}
         <div className="animate-fade-in-delay-3 w-full max-w-md">
-          <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
+          {submitted ? (
+            <div className="rounded-xl border border-emerald-800 bg-emerald-950/40 px-6 py-4 text-emerald-400 text-sm">
+              You&apos;re on the list. See you Friday. 🎉
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
               <input
                 type="email"
                 required
@@ -80,11 +107,14 @@ export default function Home() {
               />
               <button
                 type="submit"
-                className="rounded-xl bg-white text-black px-6 py-3 text-sm font-semibold hover:bg-zinc-200 transition-colors whitespace-nowrap"
+                disabled={loading}
+                className="rounded-xl bg-white text-black px-6 py-3 text-sm font-semibold hover:bg-zinc-200 transition-colors whitespace-nowrap disabled:opacity-50"
               >
-                Subscribe free
+                {loading ? "Subscribing..." : "Subscribe free"}
               </button>
             </form>
+          )}
+          {error && <p className="mt-3 text-xs text-red-500">{error}</p>}
           <p className="mt-3 text-xs text-zinc-700">No spam. Unsubscribe anytime.</p>
         </div>
       </section>

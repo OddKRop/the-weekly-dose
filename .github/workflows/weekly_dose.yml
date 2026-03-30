@@ -48,36 +48,27 @@ jobs:
           echo "audio_url=$AUDIO_URL" >> $GITHUB_OUTPUT
           echo "title=$TITLE" >> $GITHUB_OUTPUT
 
-      - name: Upload to Buzzsprout via audio URL
+      - name: Publish to Buzzsprout via Vercel
         env:
-          BUZZSPROUT_API_TOKEN: ${{ secrets.BUZZSPROUT_API_TOKEN }}
-          BUZZSPROUT_PODCAST_ID: ${{ secrets.BUZZSPROUT_PODCAST_ID }}
           AUDIO_URL: ${{ steps.release.outputs.audio_url }}
           EPISODE_TITLE: ${{ steps.release.outputs.title }}
+          PUBLISH_TOKEN: ${{ secrets.PUBLISH_TOKEN }}
         run: |
           python3 - <<'EOF'
           import requests, os, sys
-          api_token = os.environ["BUZZSPROUT_API_TOKEN"]
-          podcast_id = os.environ["BUZZSPROUT_PODCAST_ID"]
-          audio_url  = os.environ["AUDIO_URL"]
-          title      = os.environ["EPISODE_TITLE"]
-          url = f"https://www.buzzsprout.com/api/{podcast_id}/episodes.json"
-          headers = {
-              "Authorization": f"Token token={api_token}",
-              "Content-Type": "application/json",
-          }
-          data = {
-              "title": title,
-              "audio_url": audio_url,
-              "private": 0,
-              "description": "Your weekly briefing on Norway, the world, and tech — in 20 minutes or less.",
-          }
-          response = requests.post(url, headers=headers, json=data)
+          audio_url = os.environ["AUDIO_URL"]
+          title     = os.environ["EPISODE_TITLE"]
+          token     = os.environ["PUBLISH_TOKEN"]
+          response = requests.post(
+              "https://www.weeklydose.tech/api/publish-episode",
+              headers={"x-publish-token": token, "Content-Type": "application/json"},
+              json={"audio_url": audio_url, "title": title},
+          )
           print(f"Status: {response.status_code}")
           print(f"Response: {response.text}")
           if response.ok:
               print("✓ Episode live on Buzzsprout!")
           else:
-              print("✗ Buzzsprout upload failed")
+              print("✗ Publish failed")
               sys.exit(1)
           EOF

@@ -44,7 +44,8 @@ jobs:
             --title "$TITLE" \
             --notes "Auto-generated episode" \
             --repo ${{ github.repository }}
-          AUDIO_URL=$(gh release view "$TAG" --json assets --jq '.assets[0].browserDownloadUrl' --repo ${{ github.repository }})
+          FILENAME=$(basename "$MP3_FILE")
+          AUDIO_URL="https://github.com/${{ github.repository }}/releases/download/$TAG/$FILENAME"
           echo "audio_url=$AUDIO_URL" >> $GITHUB_OUTPUT
           echo "title=$TITLE" >> $GITHUB_OUTPUT
 

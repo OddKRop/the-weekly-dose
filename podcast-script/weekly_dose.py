@@ -301,14 +301,8 @@ def main():
     audio_path = OUTPUT_DIR / f"the_weekly_dose_{timestamp}.mp3"
     text_to_speech(script, audio_path)
 
-    # Step 4: Upload to Buzzsprout
-    episode_title = f"The Weekly Dose – {datetime.now().strftime('%d. %B %Y')}"
-    episode_description = "Your weekly briefing on Norway, the world, and tech — in 20 minutes or less."
-    episode_url = upload_to_buzzsprout(audio_path, episode_title, episode_description)
-
     print(f"\n✓ Done! Podcast ready: {audio_path}")
-    if episode_url:
-        print(f"✓ Live on Buzzsprout: {episode_url}")
+    # Buzzsprout upload is handled by GitHub Actions (separate step)
 
 
 if __name__ == "__main__":

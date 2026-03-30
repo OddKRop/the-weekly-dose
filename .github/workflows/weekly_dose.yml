@@ -8,6 +8,8 @@ on:
 jobs:
   generate-episode:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # Trengs for å lage GitHub Releases
 
     steps:
       - name: Checkout repo
@@ -22,11 +24,60 @@ jobs:
         working-directory: podcast-script
         run: pip install -r requirements.txt
 
-      - name: Generate and upload episode
+      - name: Generate episode (script + audio)
         working-directory: podcast-script
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: python weekly_dose.py
+
+      - name: Upload MP3 to GitHub Releases
+        id: release
+        working-directory: podcast-script
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          MP3_FILE=$(ls output/the_weekly_dose_*.mp3 | tail -1)
+          TAG="episode-$(date '+%Y%m%d-%H%M')"
+          TITLE="The Weekly Dose – $(date '+%d. %B %Y')"
+          gh release create "$TAG" "$MP3_FILE" \
+            --title "$TITLE" \
+            --notes "Auto-generated episode" \
+            --repo ${{ github.repository }}
+          AUDIO_URL=$(gh release view "$TAG" --json assets --jq '.assets[0].browserDownloadUrl' --repo ${{ github.repository }})
+          echo "audio_url=$AUDIO_URL" >> $GITHUB_OUTPUT
+          echo "title=$TITLE" >> $GITHUB_OUTPUT
+
+      - name: Upload to Buzzsprout via audio URL
+        env:
           BUZZSPROUT_API_TOKEN: ${{ secrets.BUZZSPROUT_API_TOKEN }}
           BUZZSPROUT_PODCAST_ID: ${{ secrets.BUZZSPROUT_PODCAST_ID }}
-        run: python weekly_dose.py
+          AUDIO_URL: ${{ steps.release.outputs.audio_url }}
+          EPISODE_TITLE: ${{ steps.release.outputs.title }}
+        run: |
+          python3 - <<'EOF'
+          import requests, os, sys
+          api_token = os.environ["BUZZSPROUT_API_TOKEN"]
+          podcast_id = os.environ["BUZZSPROUT_PODCAST_ID"]
+          audio_url  = os.environ["AUDIO_URL"]
+          title      = os.environ["EPISODE_TITLE"]
+          url = f"https://www.buzzsprout.com/api/{podcast_id}/episodes.json"
+          headers = {
+              "Authorization": f"Token token={api_token}",
+              "Content-Type": "application/json",
+          }
+          data = {
+              "title": title,
+              "audio_url": audio_url,
+              "private": 0,
+              "description": "Your weekly briefing on Norway, the world, and tech — in 20 minutes or less.",
+          }
+          response = requests.post(url, headers=headers, json=data)
+          print(f"Status: {response.status_code}")
+          print(f"Response: {response.text}")
+          if response.ok:
+              print("✓ Episode live on Buzzsprout!")
+          else:
+              print("✗ Buzzsprout upload failed")
+              sys.exit(1)
+          EOF

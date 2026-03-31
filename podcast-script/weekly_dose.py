@@ -148,27 +148,37 @@ def generate_podcast_script(articles: list[dict]) -> str:
     if not articles:
         raise ValueError("No articles to process — check your RSS feeds and time window.")
 
-    client = anthropic.Anthropic()  # Reads ANTHROPIC_API_KEY from environment
-
+    import time
+    client = anthropic.Anthropic()
     user_prompt = build_article_prompt(articles)
-
     print(f"Sending {len(articles)} articles to Claude...")
 
-    with client.messages.stream(
-        model="claude-opus-4-6",
-        max_tokens=4096,
-        system=SYSTEM_PROMPT,
-        messages=[{"role": "user", "content": user_prompt}],
-    ) as stream:
-        print("\n--- Podcast Script (streaming) ---\n")
-        script_parts = []
-        for text in stream.text_stream:
-            print(text, end="", flush=True)
-            script_parts.append(text)
+    max_retries = 5
+    for attempt in range(1, max_retries + 1):
+        try:
+            with client.messages.stream(
+                model="claude-opus-4-6",
+                max_tokens=4096,
+                system=SYSTEM_PROMPT,
+                messages=[{"role": "user", "content": user_prompt}],
+            ) as stream:
+                print("\n--- Podcast Script (streaming) ---\n")
+                script_parts = []
+                for text in stream.text_stream:
+                    print(text, end="", flush=True)
+                    script_parts.append(text)
 
-    script = "".join(script_parts)
-    print("\n\n--- End of Script ---")
-    return script
+            script = "".join(script_parts)
+            print("\n\n--- End of Script ---")
+            return script
+
+        except anthropic.APIStatusError as e:
+            if "overloaded_error" in str(e) and attempt < max_retries:
+                wait = 30 * attempt
+                print(f"\n  Claude overloaded — retrying in {wait}s (attempt {attempt}/{max_retries})...")
+                time.sleep(wait)
+            else:
+                raise
 
 
 # ─── Step 3: Text-to-Speech via OpenAI ───────────────────────────────────────

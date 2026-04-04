@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const episodeUrl = `https://www.buzzsprout.com/${podcastId}/${data.id}`;
+  const episodeUrl = "https://open.spotify.com/show/3Ucf7fHQ2YGwLHrnDQM5bs";
 
   // ── Send newsletter via Buttondown ─────────────────────────────────────────
   let newsletterResult: { status: number; ok: boolean } | null = null;

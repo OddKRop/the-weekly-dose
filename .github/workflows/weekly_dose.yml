@@ -2,7 +2,7 @@ name: The Weekly Dose — Generate & Upload Episode
 
 on:
   schedule:
-    - cron: "0 23 * * 4"  # Torsdag 23:00 UTC = 00:00 Oslo-tid (natt til fredag)
+    - cron: "0 3 * * 5"  # Fredag 03:00 UTC = 04:00 Oslo-tid
   workflow_dispatch:       # Kan også kjøres manuelt fra GitHub
 
 jobs:

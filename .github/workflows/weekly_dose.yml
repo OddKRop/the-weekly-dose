@@ -49,7 +49,7 @@ jobs:
           echo "audio_url=$AUDIO_URL" >> $GITHUB_OUTPUT
           echo "title=$TITLE" >> $GITHUB_OUTPUT
 
-      - name: Publish to Buzzsprout via Vercel
+      - name: Publish to Buzzsprout + send newsletter via Vercel
         working-directory: podcast-script
         env:
           AUDIO_URL: ${{ steps.release.outputs.audio_url }}
@@ -57,20 +57,30 @@ jobs:
           PUBLISH_TOKEN: ${{ secrets.PUBLISH_TOKEN }}
         run: |
           python3 - <<'EOF'
-          import requests, os, sys
+          import requests, os, sys, json
+
           audio_url = os.environ["AUDIO_URL"]
           title     = os.environ["EPISODE_TITLE"]
           token     = os.environ["PUBLISH_TOKEN"]
 
+          with open("output/newsletter.json", encoding="utf-8") as f:
+              newsletter = json.load(f)
+
           response = requests.post(
               "https://www.weeklydose.tech/api/publish-episode",
               headers={"x-publish-token": token, "Content-Type": "application/json"},
-              json={"audio_url": audio_url, "title": title},
+              json={
+                  "audio_url": audio_url,
+                  "title": title,
+                  "newsletter_subject": newsletter["subject"],
+                  "newsletter_bullets": newsletter["bullets"],
+                  "newsletter_ending": newsletter.get("ending", ""),
+              },
           )
           print(f"Status: {response.status_code}")
           print(f"Response: {response.text}")
           if response.ok:
-              print("✓ Episode live on Buzzsprout!")
+              print("✓ Episode live on Buzzsprout + newsletter sent!")
           else:
               print("✗ Publish failed")
               sys.exit(1)

@@ -242,6 +242,53 @@ def text_to_speech(script: str, output_path: Path) -> Path:
     return output_path
 
 
+# ─── Step 2b: Generate Newsletter Content ─────────────────────────────────────
+
+def generate_newsletter_content(script: str) -> dict:
+    """Generate newsletter subject, bullet points and teaser from the podcast script."""
+    print("\n=== Step 2b: Generating Newsletter Content ===")
+
+    client = anthropic.Anthropic()
+
+    prompt = f"""Based on this podcast script, generate newsletter content. Return ONLY a JSON object, nothing else.
+
+Format:
+{{
+  "subject": "This week: [short catchy summary of 3–4 top stories]",
+  "bullets": [
+    "🌍 [Story summary — key detail or implication]",
+    "📈 [Story summary — key detail or implication]"
+  ],
+  "ending": "...and [the most surprising/quirky story from the episode]. Yes, really."
+}}
+
+Requirements:
+- subject: starts with "This week: " followed by a comma-separated list of 3–4 top stories
+- bullets: 6–8 items, each starting with a relevant emoji
+- ending: pick the most surprising or human-interest story and format exactly as shown
+- Write in English
+
+Script:
+{script}"""
+
+    message = client.messages.create(
+        model="claude-opus-4-6",
+        max_tokens=1000,
+        messages=[{"role": "user", "content": prompt}],
+    )
+
+    text = message.content[0].text.strip()
+    # Strip markdown code fences if Claude wraps the JSON
+    text = re.sub(r"^```(?:json)?\s*", "", text)
+    text = re.sub(r"\s*```$", "", text)
+
+    newsletter = json.loads(text)
+    print(f"  Subject : {newsletter['subject']}")
+    print(f"  Bullets : {len(newsletter['bullets'])} items")
+    print(f"  Ending  : {newsletter.get('ending', '')}")
+    return newsletter
+
+
 # ─── Step 4: Upload to Buzzsprout ─────────────────────────────────────────────
 
 def upload_to_buzzsprout(audio_path: Path, title: str, description: str) -> str:
@@ -306,6 +353,13 @@ def main():
     with open(script_path, "w", encoding="utf-8") as f:
         f.write(script)
     print(f"\nScript saved to {script_path}")
+
+    # Step 2b: Generate newsletter content from the script
+    newsletter = generate_newsletter_content(script)
+    newsletter_path = OUTPUT_DIR / "newsletter.json"
+    with open(newsletter_path, "w", encoding="utf-8") as f:
+        json.dump(newsletter, f, ensure_ascii=False, indent=2)
+    print(f"Newsletter content saved to {newsletter_path}")
 
     # Step 3: Convert script to audio
     audio_path = OUTPUT_DIR / f"the_weekly_dose_{timestamp}.mp3"

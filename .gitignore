@@ -1,1 +1,7 @@
 podcast-script/.env
+
+# Miljøfiler. .env.docker inneholder PUBLISH_TOKEN, Buzzsprout- og
+# Buttondown-nøkler og skal aldri committes.
+.env
+.env.*
+!.env.example

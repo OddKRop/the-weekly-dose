@@ -22,6 +22,8 @@ const features = [
 
 export default function Home() {
   const [email, setEmail] = useState("");
+  // Honningkrukke. Skjult for mennesker, så en utfylt verdi betyr bot.
+  const [website, setWebsite] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -36,11 +38,19 @@ export default function Home() {
       const res = await fetch("/api/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, website }),
       });
 
       if (res.ok) {
         setSubmitted(true);
+      } else if (res.status === 429) {
+        setError("Too many attempts. Please wait a moment and try again.");
+      } else if (res.status === 400) {
+        // Kun 400 kan vises videre: det er tilfellene brukeren selv kan rette.
+        // Feil på 500-siden nevner Buttondown og manglende nøkkel, og skal ikke
+        // ut til besøkende.
+        const data = await res.json().catch(() => null);
+        setError(data?.error ?? "Please check your email address.");
       } else {
         setError("Something went wrong. Please try again.");
       }
@@ -97,6 +107,19 @@ export default function Home() {
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
+              {/* Skjult for mennesker og skjermlesere, synlig for boter som
+                  fyller ut alt de finner. Ikke display:none — en del boter
+                  hopper over slike felt. */}
+              <input
+                type="text"
+                name="website"
+                value={website}
+                onChange={(e) => setWebsite(e.target.value)}
+                tabIndex={-1}
+                autoComplete="off"
+                aria-hidden="true"
+                className="absolute left-[-9999px] h-0 w-0 opacity-0"
+              />
               <input
                 type="email"
                 required

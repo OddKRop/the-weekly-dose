@@ -59,6 +59,16 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    // Ingen `type` her, og det er med vilje. Buttondown bruker da standarden:
+    // abonnenten får en bekreftelses-e-post og står som `unactivated` til hen
+    // klikker. Sender man `type: "regular"`, hoppes bekreftelsen over — altså
+    // dobbel opt-in avskrudd for hele skjemaet. Det ser ut som å fjerne unødig
+    // friksjon, men er samtykket som forsvinner.
+    //
+    // Det er også dette som gjør at en bot forbi rate limiten ikke skitner til
+    // lista: raden bekreftes aldri. Men merk at bekreftelsesmailen sendes
+    // uansett, til adressen som ble oppgitt — så uten rate limiting kunne
+    // skjemaet brukt nyhetsbrevet til å spamme tredjeparter.
     const res = await fetch("https://api.buttondown.email/v1/subscribers", {
       method: "POST",
       headers: {

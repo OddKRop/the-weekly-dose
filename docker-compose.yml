@@ -1,0 +1,16 @@
+services:
+  app:
+    build:
+      # Repoet inneholder både podcast-script/ (kjøres av GitHub Actions) og
+      # landing-page/. Bare sistnevnte skal i containeren.
+      context: ./landing-page
+      dockerfile: Dockerfile
+    container_name: weeklydose-app
+    restart: unless-stopped
+    env_file:
+      - .env.docker
+    # 3001 = trenings-app, 3002 = fundamental-analyse-ai,
+    # 3003 = Oppskriftgenerator, 8080 = lokalai.
+    # Containeren lytter alltid på 3000 internt.
+    ports:
+      - "3004:3000"

@@ -1,6 +1,8 @@
 anthropic
 feedparser
-openai>=1.0
+kokoro-onnx
+numpy
+soundfile
 python-dateutil
 python-dotenv
 requests

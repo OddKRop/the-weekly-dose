@@ -5,3 +5,17 @@ podcast-script/.env
 .env
 .env.*
 !.env.example
+
+# Lokalt Python-miljø for Kokoro-TTS
+.venv/
+podcast-script/.venv/
+
+# Genererte episodefiler. Lyden ligger permanent på GitHub Releases; lokale kopier
+# er arbeidsfiler og skal ikke inn i dette offentlige repoet.
+podcast-script/output/*.mp3
+podcast-script/output/*.wav
+podcast-script/output/articles_raw_*.json
+
+# Python-cache
+__pycache__/
+*.pyc

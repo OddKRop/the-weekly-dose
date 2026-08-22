@@ -1,15 +1,21 @@
 name: The Weekly Dose — Generate & Upload Episode
 
+# Den ukentlige kjøringen skjer på NEXUS1 (weekly-dose.timer), der Kokoro-TTS-en
+# kjører lokalt og gratis. Denne workflowen er reserveløsningen: kjør den manuelt
+# hvis NEXUS1 er nede, eller med dry_run for å teste pipelinen uten å publisere.
 on:
-  schedule:
-    - cron: "0 3 * * 5"  # Fredag 03:00 UTC = 04:00 Oslo-tid
-  workflow_dispatch:       # Kan også kjøres manuelt fra GitHub
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Lag episoden, men ikke publiser til Buzzsprout eller send nyhetsbrev"
+        type: boolean
+        default: false
 
 jobs:
   generate-episode:
     runs-on: ubuntu-latest
     permissions:
-      contents: write  # Trengs for å lage GitHub Releases
+      contents: write # Trengs for å lage GitHub Releases
 
     steps:
       - name: Checkout repo
@@ -24,64 +30,33 @@ jobs:
         working-directory: podcast-script
         run: pip install -r requirements.txt
 
+      # Kokoro-modellen er 350 MB og endrer seg aldri — cachen sparer nedlastingen hver gang.
+      - name: Cache Kokoro model
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/kokoro
+          key: kokoro-model-files-v1.0
+
       - name: Generate episode (script + audio)
         working-directory: podcast-script
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: python weekly_dose.py
 
-      - name: Upload MP3 to GitHub Releases
-        id: release
-        working-directory: podcast-script
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          MP3_FILE=$(ls output/the_weekly_dose_*.mp3 | tail -1)
-          TAG="episode-$(date '+%Y%m%d-%H%M')"
-          TITLE="The Weekly Dose – $(date '+%d. %B %Y')"
-          gh release create "$TAG" "$MP3_FILE" \
-            --title "$TITLE" \
-            --notes "Auto-generated episode" \
-            --repo ${{ github.repository }}
-          FILENAME=$(basename "$MP3_FILE")
-          AUDIO_URL="https://github.com/${{ github.repository }}/releases/download/$TAG/$FILENAME"
-          echo "audio_url=$AUDIO_URL" >> $GITHUB_OUTPUT
-          echo "title=$TITLE" >> $GITHUB_OUTPUT
+      # Tørrkjøring: last opp lyden som artefakt så den kan lyttes på uten å publisere.
+      - name: Upload MP3 as artifact (dry run)
+        if: github.event.inputs.dry_run == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: episode-dry-run
+          path: podcast-script/output/*.mp3
+          retention-days: 7
 
-      - name: Publish to Buzzsprout + send newsletter via Vercel
+      - name: Publish episode (GitHub Release + Buzzsprout + newsletter)
+        if: github.event.inputs.dry_run != 'true'
         working-directory: podcast-script
         env:
-          AUDIO_URL: ${{ steps.release.outputs.audio_url }}
-          EPISODE_TITLE: ${{ steps.release.outputs.title }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PUBLISH_TOKEN: ${{ secrets.PUBLISH_TOKEN }}
-        run: |
-          python3 - <<'EOF'
-          import requests, os, sys, json
-
-          audio_url = os.environ["AUDIO_URL"]
-          title     = os.environ["EPISODE_TITLE"]
-          token     = os.environ["PUBLISH_TOKEN"]
-
-          with open("output/newsletter.json", encoding="utf-8") as f:
-              newsletter = json.load(f)
-
-          response = requests.post(
-              "https://www.weeklydose.tech/api/publish-episode",
-              headers={"x-publish-token": token, "Content-Type": "application/json"},
-              json={
-                  "audio_url": audio_url,
-                  "title": title,
-                  "newsletter_subject": newsletter["subject"],
-                  "newsletter_bullets": newsletter["bullets"],
-                  "newsletter_ending": newsletter.get("ending", ""),
-              },
-          )
-          print(f"Status: {response.status_code}")
-          print(f"Response: {response.text}")
-          if response.ok:
-              print("✓ Episode live on Buzzsprout + newsletter sent!")
-          else:
-              print("✗ Publish failed")
-              sys.exit(1)
-          EOF
+          REPO: ${{ github.repository }}
+        run: python publish.py

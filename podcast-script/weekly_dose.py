@@ -1,6 +1,6 @@
 """
 The Weekly Dose — Automated News Podcast Script Generator
-Steps 1–3: Fetch RSS feeds → Claude script → OpenAI TTS audio
+Steps 1–3: Fetch RSS feeds → Claude script → Kokoro TTS audio (local, no API)
 """
 
 import feedparser
@@ -9,12 +9,13 @@ import json
 import re
 import textwrap
 import os
+import subprocess
+import tempfile
 import requests
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from dateutil import parser as dateparser
 from dotenv import load_dotenv
-from openai import OpenAI
 
 load_dotenv()
 
@@ -39,9 +40,20 @@ HOURS_LOOKBACK = 168         # Only include articles from the last N hours (7 da
 
 # ─── TTS Configuration ────────────────────────────────────────────────────────
 
-TTS_MODEL = "tts-1-hd"      # "tts-1" (faster/cheaper) or "tts-1-hd" (higher quality)
-TTS_VOICE = "echo"           # alloy | echo | fable | onyx | nova | shimmer
-TTS_CHUNK_SIZE = 4000        # OpenAI max is 4096 chars; stay safely below
+# Kokoro-82M runs locally on CPU (~8x realtime), so TTS costs nothing and needs no API key.
+TTS_VOICE = "bm_george"      # British male: bm_george | bm_lewis | bm_daniel | bm_fable
+TTS_LANG = "en-gb"
+TTS_CHUNK_SIZE = 350         # Kokoro caps at 510 phoneme tokens; 350 chars stays well under
+TTS_PAUSE_MS = 150           # Silence inserted between chunks so joins do not sound clipped
+TTS_BITRATE = "96k"          # Mono speech; 96 kbps is transparent enough for a podcast
+
+# Model files live outside the repo (350 MB, and this repo is public). Missing files are
+# downloaded on first run, which is also what makes this work on a fresh CI runner.
+MODEL_DIR = Path(os.environ.get("KOKORO_MODEL_DIR", Path.home() / ".local/share/kokoro"))
+MODEL_RELEASE = "https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0"
+MODEL_FILES = {"kokoro-v1.0.onnx": f"{MODEL_RELEASE}/kokoro-v1.0.onnx",
+               "voices-v1.0.bin":  f"{MODEL_RELEASE}/voices-v1.0.bin"}
+
 OUTPUT_DIR = Path("output")
 
 
@@ -181,7 +193,7 @@ def generate_podcast_script(articles: list[dict]) -> str:
                 raise
 
 
-# ─── Step 3: Text-to-Speech via OpenAI ───────────────────────────────────────
+# ─── Step 3: Text-to-Speech via Kokoro (local) ───────────────────────────────
 
 def split_into_chunks(text: str, max_chars: int = TTS_CHUNK_SIZE) -> list[str]:
     """
@@ -212,33 +224,66 @@ def split_into_chunks(text: str, max_chars: int = TTS_CHUNK_SIZE) -> list[str]:
     return [c for c in chunks if c]
 
 
-def text_to_speech(script: str, output_path: Path) -> Path:
-    """Convert script to MP3 using OpenAI TTS. Chunks long scripts automatically."""
-    print("\n=== Step 3: Converting Script to Audio (OpenAI TTS) ===")
+def ensure_model() -> tuple[Path, Path]:
+    """Download the Kokoro model files if they are not already cached."""
+    MODEL_DIR.mkdir(parents=True, exist_ok=True)
+    for name, url in MODEL_FILES.items():
+        target = MODEL_DIR / name
+        if target.exists() and target.stat().st_size > 0:
+            continue
+        print(f"  Downloading {name} (first run only)...")
+        with requests.get(url, stream=True, timeout=600) as r:
+            r.raise_for_status()
+            tmp = target.with_suffix(target.suffix + ".part")
+            with open(tmp, "wb") as f:
+                for block in r.iter_content(chunk_size=1 << 20):
+                    f.write(block)
+            tmp.rename(target)
+    return MODEL_DIR / "kokoro-v1.0.onnx", MODEL_DIR / "voices-v1.0.bin"
 
-    oai = OpenAI()  # Reads OPENAI_API_KEY from environment
+
+def text_to_speech(script: str, output_path: Path) -> Path:
+    """Convert script to MP3 using Kokoro-82M locally. Chunks long scripts automatically."""
+    print("\n=== Step 3: Converting Script to Audio (Kokoro, local) ===")
+
+    import numpy as np
+    import soundfile as sf
+    from kokoro_onnx import Kokoro
+
+    model_path, voices_path = ensure_model()
+    kokoro = Kokoro(str(model_path), str(voices_path))
+
     chunks = split_into_chunks(script)
     print(f"Script split into {len(chunks)} chunk(s) for TTS.")
 
-    audio_parts: list[bytes] = []
+    audio_parts: list = []
+    sample_rate = 24000
     for i, chunk in enumerate(chunks, 1):
-        print(f"  Synthesising chunk {i}/{len(chunks)} ({len(chunk)} chars)...")
-        response = oai.audio.speech.create(
-            model=TTS_MODEL,
-            voice=TTS_VOICE,
-            input=chunk,
-            response_format="mp3",
-        )
-        audio_parts.append(response.content)
+        print(f"  Synthesising chunk {i}/{len(chunks)} ({len(chunk)} chars)...", flush=True)
+        samples, sample_rate = kokoro.create(chunk, voice=TTS_VOICE, speed=1.0, lang=TTS_LANG)
+        audio_parts.append(samples)
+        if i < len(chunks):
+            audio_parts.append(np.zeros(int(sample_rate * TTS_PAUSE_MS / 1000), dtype=samples.dtype))
 
-    # Concatenate raw MP3 bytes (valid for CBR streams; good enough for podcast use)
+    audio = np.concatenate(audio_parts)
+    duration = len(audio) / sample_rate
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(output_path, "wb") as f:
-        for part in audio_parts:
-            f.write(part)
+
+    # Kokoro emits float32 WAV; ffmpeg does the MP3 encode Buzzsprout expects.
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
+        wav_path = Path(tmp.name)
+    try:
+        sf.write(wav_path, audio, sample_rate)
+        subprocess.run(
+            ["ffmpeg", "-y", "-loglevel", "error", "-i", str(wav_path),
+             "-ac", "1", "-b:a", TTS_BITRATE, str(output_path)],
+            check=True,
+        )
+    finally:
+        wav_path.unlink(missing_ok=True)
 
     size_kb = output_path.stat().st_size // 1024
-    print(f"  Audio saved to {output_path} ({size_kb} KB)")
+    print(f"  Audio saved to {output_path} ({size_kb} KB, {duration / 60:.1f} min)")
     return output_path
 
 

@@ -7,22 +7,30 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { audio_url, title, newsletter_subject, newsletter_bullets, newsletter_ending } =
-    await req.json();
+  const {
+    audio_url,
+    title,
+    newsletter_subject,
+    newsletter_bullets,
+    newsletter_ending,
+    // Recovery path for when the episode published but the newsletter did not: without
+    // it, retrying the mail means publishing a duplicate episode to Buzzsprout.
+    newsletter_only = false,
+  } = await req.json();
 
-  if (!audio_url || !title) {
+  if (!newsletter_only && (!audio_url || !title)) {
     return NextResponse.json({ error: "Missing audio_url or title" }, { status: 400 });
   }
 
   const apiToken = process.env.BUZZSPROUT_API_TOKEN;
   const podcastId = process.env.BUZZSPROUT_PODCAST_ID;
 
-  if (!apiToken || !podcastId) {
+  if (!newsletter_only && (!apiToken || !podcastId)) {
     return NextResponse.json({ error: "Buzzsprout credentials not configured" }, { status: 500 });
   }
 
   // ── Publish to Buzzsprout ──────────────────────────────────────────────────
-  const response = await fetch(
+  const response = newsletter_only ? null : await fetch(
     `https://www.buzzsprout.com/api/${podcastId}/episodes.json`,
     {
       method: "POST",
@@ -40,9 +48,9 @@ export async function POST(req: NextRequest) {
     }
   );
 
-  const data = await response.json();
+  const data = response ? await response.json() : null;
 
-  if (!response.ok) {
+  if (response && !response.ok) {
     return NextResponse.json(
       { error: "Buzzsprout error", details: data },
       { status: response.status }
@@ -52,7 +60,7 @@ export async function POST(req: NextRequest) {
   const episodeUrl = "https://open.spotify.com/show/3Ucf7fHQ2YGwLHrnDQM5bs";
 
   // ── Send newsletter via Buttondown ─────────────────────────────────────────
-  let newsletterResult: { status: number; ok: boolean } | null = null;
+  let newsletterResult: { status: number; ok: boolean; detail?: string } | null = null;
 
   if (newsletter_subject && newsletter_bullets && process.env.BUTTONDOWN_API_KEY) {
     const bullets = (newsletter_bullets as string[]).map((b) => `- ${b}`).join("\n");
@@ -77,6 +85,12 @@ The Weekly Dose`;
       headers: {
         Authorization: `Token ${process.env.BUTTONDOWN_API_KEY}`,
         "Content-Type": "application/json",
+        // Buttondown's 2026-04-01 API version defaults new emails to draft, and refuses
+        // status "about_to_send" with 400 sending_requires_confirmation unless this header
+        // is present. It is a one-time confirmation per API key, but sending it on every
+        // request costs nothing and survives a key rotation. This is what silently swallowed
+        // the newsletter on 2026-08-22.
+        "X-Buttondown-Live-Dangerously": "true",
       },
       body: JSON.stringify({
         subject: newsletter_subject,
@@ -88,7 +102,11 @@ The Weekly Dose`;
     newsletterResult = { status: bdRes.status, ok: bdRes.ok };
 
     if (!bdRes.ok) {
-      console.error("Buttondown error:", bdRes.status, await bdRes.text());
+      // Return the reason, not just the status. When this failed silently, the only
+      // record of why was a console line in the Vercel runtime logs.
+      const detail = await bdRes.text();
+      console.error("Buttondown error:", bdRes.status, detail);
+      newsletterResult = { ...newsletterResult, detail: detail.slice(0, 500) };
     }
   }
 

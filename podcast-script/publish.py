@@ -91,7 +91,7 @@ def create_release(mp3: Path, title: str, tag: str, notes: str) -> str:
     return f"https://github.com/{REPO}/releases/download/{tag}/{mp3.name}"
 
 
-def publish(audio_url: str, title: str, newsletter: dict) -> None:
+def publish(audio_url: str, title: str, newsletter: dict, newsletter_only: bool = False) -> None:
     token = os.environ.get("PUBLISH_TOKEN")
     if not token:
         sys.exit("PUBLISH_TOKEN is not set.")
@@ -105,6 +105,7 @@ def publish(audio_url: str, title: str, newsletter: dict) -> None:
             "newsletter_subject": newsletter.get("subject"),
             "newsletter_bullets": newsletter.get("bullets"),
             "newsletter_ending": newsletter.get("ending", ""),
+            "newsletter_only": newsletter_only,
         },
         timeout=120,
     )
@@ -112,10 +113,31 @@ def publish(audio_url: str, title: str, newsletter: dict) -> None:
     print(f"Response: {response.text}")
     if not response.ok:
         sys.exit("✗ Publish failed")
-    print("✓ Episode live + newsletter sent!")
+
+    # The endpoint returns 200 when the episode went out but the newsletter did not, so
+    # HTTP status alone is not success. Reporting "sent" here once hid a failed send
+    # completely — exit non-zero instead, which also trips the systemd failure notifier.
+    result = response.json().get("newsletter")
+    if result is None:
+        print("✓ Episode live (no newsletter content in this run)")
+        return
+    if not result.get("ok"):
+        sys.exit(f"✗ Episode is live, but the newsletter FAILED: {result}")
+
+    print("✓ Episode live + newsletter sent!" if not newsletter_only else "✓ Newsletter sent!")
 
 
 def main() -> None:
+    # Recovery path: episode already on Buzzsprout, only the newsletter needs resending.
+    # Re-running the full publish would create a duplicate release and a duplicate episode.
+    if "--newsletter-only" in sys.argv:
+        newsletter = load_newsletter()
+        if not newsletter.get("subject"):
+            sys.exit("No newsletter content in output/newsletter.json.")
+        print(f"Newsletter only — subject: {newsletter['subject']}")
+        publish("", "", newsletter, newsletter_only=True)
+        return
+
     mp3 = latest_mp3()
     duration = audio_duration(mp3)
     newsletter = load_newsletter()
